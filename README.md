@@ -78,7 +78,7 @@ python exercises/sorting/nlogn.py
 
 ## 🪶 Author
 
-[Matteo Piccini](matteopiccini.com) - Full Stack Engineer · Educator · Technical Editor
+[Matteo Piccini](https://matteopiccini.com) - Full Stack Engineer · Educator · Technical Editor
 
 ## 🌟 Contribute
 
