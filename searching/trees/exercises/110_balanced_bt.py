@@ -1,9 +1,9 @@
 # Definition for a binary tree node.
-# class TreeNode:
-#     def __init__(self, val=0, left=None, right=None):
-#         self.val = val
-#         self.left = left
-#         self.right = right
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
 
 
 class Solution:
@@ -41,5 +41,5 @@ class Solution:
         return is_balanced, height
 
     def isBalanced(self, root: TreeNode) -> bool:
-        is_balanced, height = self.check_height(root)
+        is_balanced, _ = self.check_height(root)
         return is_balanced

@@ -195,3 +195,231 @@ Traversal	Time	Space (avg)	Space (worst)
 **Iterative DFS**	O(n)	O(h)	O(n) if skewed
 
 **BFS**	O(n)	O(w)	O(n) where w = max width
+
+
+## 7. GENERAL STRATEGIES
+
+### The core recursion template for trees
+
+Almost every binary tree problem with recursion fits this shape:
+
+```python
+def dfs(node):
+    if node is None:
+        return BASE_VALUE   # what makes sense for an empty subtree?
+
+    left  = dfs(node.left)
+    right = dfs(node.right)
+
+    # combine info from children + node to build the answer for this subtree
+    result = COMBINE(left, right, node)
+
+    return result
+```
+
+The game is always:
+
+1. **What should `dfs(node)` return for the subtree rooted at `node`?**
+   A number, a boolean, a pair, etc.
+
+2. **What is the base return value when `node` is `None`?**
+
+3. **How do I combine left and right (and maybe node.val) to get the current subtree result?**
+
+That is it.
+
+---
+
+### 1. Height with the template
+
+You already know the formula, so map it to the template.
+
+**Goal**: `dfs(node)` returns the **height** of the subtree.
+
+* Base case: empty subtree has height `0`.
+* Recurrence: height is `1 + max(left_height, right_height)`.
+
+```python
+def height(root):
+    def dfs(node):
+        if node is None:
+            return 0
+        
+        left  = dfs(node.left)
+        right = dfs(node.right)
+        
+        return 1 + max(left, right)
+
+    return dfs(root)
+```
+
+Map to template:
+
+* `BASE_VALUE` is `0`.
+* `COMBINE` is `1 + max(left, right)`.
+
+---
+
+### 2. Diameter with the template
+
+You already know the idea:
+Diameter at a node is `left_height + right_height`.
+Global diameter is the maximum of these over all nodes.
+
+Here you see a **second pattern**:
+Sometimes the function returns one value (height) but you track another value (diameter) in a separate variable.
+
+```python
+def diameterOfBinaryTree(root):
+    diameter = 0
+
+    def dfs(node):
+        nonlocal diameter
+        
+        if node is None:
+            return 0
+        
+        left_height  = dfs(node.left)
+        right_height = dfs(node.right)
+        
+        # diameter that passes through this node
+        diameter = max(diameter, left_height + right_height)
+        
+        # return height to parent
+        return 1 + max(left_height, right_height)
+
+    dfs(root)
+    return diameter
+```
+
+Pattern:
+
+* `dfs(node)` returns **height**.
+* You also update `diameter` using `left_height + right_height`.
+
+So here recursion is used to compute height, and as a side effect you accumulate the best diameter.
+
+---
+
+### 3. Checking if a tree is balanced
+
+Here is the part that often feels tricky, because you need both:
+
+* Is the subtree balanced?
+* What is its height?
+
+Instead of two separate passes, return **both values at once**.
+
+**Goal**: `dfs(node)` returns a pair: `(is_balanced, height)`.
+
+```python
+def isBalanced(root):
+    def dfs(node):
+        if node is None:
+            # empty subtree is balanced and has height 0
+            return True, 0
+        
+        left_bal,  left_h  = dfs(node.left)
+        right_bal, right_h = dfs(node.right)
+        
+        # current node is balanced if:
+        # 1) left is balanced
+        # 2) right is balanced
+        # 3) heights differ by at most 1
+        current_bal = (
+            left_bal
+            and right_bal
+            and abs(left_h - right_h) <= 1
+        )
+        
+        current_h = 1 + max(left_h, right_h)
+        
+        return current_bal, current_h
+
+    balanced, _ = dfs(root)
+    return balanced
+```
+
+Template mapping:
+
+* Base case: `True, 0`.
+* Combine:
+
+  * `current_h = 1 + max(left_h, right_h)`
+  * `current_bal` is a boolean condition using child results.
+
+This is **Pattern 2** in general:
+Return multiple pieces of information from the recursion, so each call has everything it needs.
+
+---
+
+
+## Three big reusable recursion patterns
+
+Let me summarize the three patterns that cover almost every tree problem:
+
+1. **Single value from each subtree**
+   Example: height, max depth, sum of values, min value, check BST with bounds, etc.
+
+   ```python
+   def dfs(node):
+       if not node:
+           return BASE
+
+       left  = dfs(node.left)
+       right = dfs(node.right)
+
+       return COMBINE(left, right, node)
+   ```
+
+2. **Multiple values returned from each subtree**
+   Example: isBalanced + height, isBST + min + max, best path sum + max downward path.
+
+   ```python
+   def dfs(node):
+       if not node:
+           return BASE1, BASE2, ...  # tuple
+
+       l1, l2 = dfs(node.left)
+       r1, r2 = dfs(node.right)
+
+       # compute current values from children and node
+       c1 = ...
+       c2 = ...
+
+       return c1, c2
+   ```
+
+3. **Return one thing, track another globally**
+   Example: diameter, max path sum, number of good nodes, longest univalue path.
+
+   ```python
+   def someProperty(root):
+       best = INITIAL
+
+       def dfs(node):
+           nonlocal best
+           if not node:
+               return BASE
+
+           left  = dfs(node.left)
+           right = dfs(node.right)
+
+           # update best using left, right, node
+           best = max(best, SOMETHING(left, right, node))
+
+           return VALUE_FOR_PARENT
+
+       dfs(root)
+       return best
+   ```
+
+When you see a new problem, ask yourself:
+
+* Can I solve it by returning one clean value per subtree?
+* Do I need more than one piece of info per subtree?
+* Or is it best to return one thing and maintain a separate global best?
+
+That alone usually tells you which pattern to use.
+
+---
